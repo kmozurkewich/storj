@@ -270,7 +270,7 @@ func (db *InfoDB) Migration() *migrate.Migration {
 						action        	INTEGER NOT NULL,
 						amount        	BIGINT  NOT NULL,
 						PRIMARY KEY ( interval_start, satellite_id, action )
-					)`,
+					)`},
 			},
 		},
 	}
