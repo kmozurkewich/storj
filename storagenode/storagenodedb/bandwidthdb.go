@@ -186,19 +186,20 @@ func (db *bandwidthdb) SummaryBySatellite(ctx context.Context, from, to time.Tim
 // Rollup bandwidth_usage data earlier than the current hour, then delete the rolled up records
 func (db *bandwidthdb) Rollup(ctx context.Context) (err error) {
 	defer mon.Task()(&ctx)(&err)
-	fmt.Printf("EEEE Running Rollup @ %v\n", time.Now())
 
-	now := time.Now()
-	hour := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, now.UTC().Location())
+	now := time.Now().UTC()
+	hour := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, now.Location())
+
+	fmt.Printf("EEEE Running rollup for %v\n", hour)
 
 	result, err := db.db.Exec(`
 		INSERT INTO bandwidth_usage_rollup (interval_start, satellite_id,  action, amount)
 		SELECT datetime(strftime('%Y-%m-%dT%H:00:00', created_at)) created_hr, satellite_id, action, SUM(amount)
 			FROM bandwidth_usage
-		WHERE created_at < ?
+		WHERE datetime(created_at) < datetime(?)
 		GROUP BY created_hr, satellite_id, action;		
 
-		DELETE FROM bandwidth_usage WHERE created_at < ?;
+		DELETE FROM bandwidth_usage WHERE datetime(created_at) < datetime(?);
 	`, hour, hour)
 	if err != nil {
 		return ErrInfo.Wrap(err)
