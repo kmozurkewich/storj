@@ -260,6 +260,18 @@ func (db *InfoDB) Migration() *migrate.Migration {
 					`ALTER TABLE pieceinfo ADD COLUMN order_limit BLOB NOT NULL DEFAULT X''`,
 				},
 			},
+			{
+				Description: "Create bandwidth_usage_rollup table.",
+				Version:     10,
+				Action: migrate.SQL{
+					`CREATE TABLE bandwidth_usage_rollup (
+						interval_start	TIMESTAMP NOT NULL,
+						satellite_id  	BLOB    NOT NULL,
+						action        	INTEGER NOT NULL,
+						amount        	BIGINT  NOT NULL,
+						PRIMARY KEY ( interval_start, satellite_id, action )
+					)`,
+			},
 		},
 	}
 }
