@@ -188,7 +188,8 @@ func (db *bandwidthdb) Rollup(ctx context.Context) (err error) {
 	defer mon.Task()(&ctx)(&err)
 
 	now := time.Now().UTC()
-	hour := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, now.Location())
+	// Go back an hour to give us room for late persists
+	hour := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, now.Location()).Add(-time.Hour)
 
 	fmt.Printf("EEEE Running rollup for %v\n", hour)
 
