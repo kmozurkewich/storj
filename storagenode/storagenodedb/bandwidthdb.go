@@ -106,7 +106,7 @@ func (db *bandwidthdb) Summary(ctx context.Context, from, to time.Time) (_ *band
 				FROM bandwidth_usage
 				WHERE datetime(?) <= datetime(created_at) AND datetime(created_at) <= datetime(?)
 				GROUP BY action
-				union
+				UNION ALL
 				SELECT action, sum(amount) a
 				FROM bandwidth_usage_rollup
 				WHERE datetime(?) <= datetime(interval_start) AND datetime(interval_start) <= datetime(?)
@@ -146,7 +146,7 @@ func (db *bandwidthdb) SummaryBySatellite(ctx context.Context, from, to time.Tim
 			FROM bandwidth_usage
 			WHERE datetime(?) <= datetime(created_at) AND datetime(created_at) <= datetime(?)
 			GROUP BY satellite_id, action
-			union
+			UNION ALL
 			SELECT satellite_id, action, sum(amount) a
 			FROM bandwidth_usage_rollup
 			WHERE datetime(?) <= datetime(interval_start) AND datetime(interval_start) <= datetime(?)
