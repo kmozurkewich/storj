@@ -71,22 +71,15 @@ func TestBandwidthRollup(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, int64(27), usage.Total())
 
-		usageBySatellite, err := db.Bandwidth().SummaryBySatellite(ctx, time.Now().Add(time.Hour*-48), time.Now())
-		require.NoError(t, err)
-		for k := range usageBySatellite {
-			switch k {
-			case testID1:
-				require.Equal(t, int64(9), usageBySatellite[testID1].Total())
-			case testID2:
-				require.Equal(t, int64(18), usageBySatellite[testID2].Total())
-			default:
-				require.Fail(t, "Found satellite usage when that shouldn't be there.")
-			}
-		}
-
 		err = db.Bandwidth().Rollup(ctx)
 		require.NoError(t, err)
 
+		// After rollup, the totals should still be the same
+		usage, err = db.Bandwidth().Summary(ctx, time.Now().Add(time.Hour*-48), time.Now())
+		require.NoError(t, err)
+		require.Equal(t, int64(27), usage.Total())
+
+		// Add more data to test the Summary calculates the bandwidth across both tables.
 		err = db.Bandwidth().Add(ctx, testID3, pb.PieceAction_PUT, 8, time.Now().Add(time.Hour*-2))
 		require.NoError(t, err)
 		err = db.Bandwidth().Add(ctx, testID3, pb.PieceAction_GET, 9, time.Now().Add(time.Hour*-2))
@@ -94,12 +87,11 @@ func TestBandwidthRollup(t *testing.T) {
 		err = db.Bandwidth().Add(ctx, testID3, pb.PieceAction_GET_AUDIT, 10, time.Now().Add(time.Hour*-2))
 		require.NoError(t, err)
 
-		// After rollup, the totals should still be the same
 		usage, err = db.Bandwidth().Summary(ctx, time.Now().Add(time.Hour*-48), time.Now())
 		require.NoError(t, err)
 		require.Equal(t, int64(54), usage.Total())
 
-		usageBySatellite, err = db.Bandwidth().SummaryBySatellite(ctx, time.Now().Add(time.Hour*-48), time.Now())
+		usageBySatellite, err := db.Bandwidth().SummaryBySatellite(ctx, time.Now().Add(time.Hour*-48), time.Now())
 		require.NoError(t, err)
 		for k := range usageBySatellite {
 			switch k {
