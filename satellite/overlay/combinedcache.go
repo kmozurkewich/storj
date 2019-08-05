@@ -7,7 +7,6 @@ import (
 	"context"
 	"sync"
 
-	"storj.io/storj/internal/sync2"
 	"storj.io/storj/pkg/pb"
 	"storj.io/storj/pkg/storj"
 )
@@ -26,7 +25,7 @@ type CombinedCache struct {
 	addressLock  sync.RWMutex
 	addressCache map[storj.NodeID]*addressInfo
 
-	keyLock *sync2.KeyLock
+	keyLock *KeyLock
 }
 
 // NewCombinedCache instantiates a new CombinedCache
@@ -34,7 +33,7 @@ func NewCombinedCache(db DB) *CombinedCache {
 	return &CombinedCache{
 		DB:           db,
 		addressCache: make(map[storj.NodeID]*addressInfo),
-		keyLock:      sync2.NewKeyLock(),
+		keyLock:      NewKeyLock(),
 	}
 }
 
@@ -65,7 +64,9 @@ func (c *CombinedCache) UpdateAddress(ctx context.Context, info *pb.Node, defaul
 	}
 
 	// Acquire lock for this node ID. This prevents a concurrent db update to
-	// this same node ID and guarantees the cache and database stay in sync
+	// this same node ID and guarantees the cache and database stay in sync.
+	// This solution works so long as calls to this code are occurring within a
+	// single process.
 	unlockFunc := c.keyLock.Lock(info.Id)
 	defer unlockFunc()
 
